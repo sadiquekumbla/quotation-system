@@ -27,7 +27,7 @@ A modern web-based quotation system that allows users to create and manage quota
 
 ## Live Demo
 
-Visit the live demo at: [Quotation System](https://your-username.github.io/quotation-system/)
+Visit the live demo at: [Quotation System](https://sadiquekumbla.github.io/quotation-system/)
 
 ## Contributing
 
