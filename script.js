@@ -19,81 +19,161 @@ const itemsList = document.getElementById('itemsList');
 const totalAmountElement = document.getElementById('totalAmount');
 const generateQuotationBtn = document.getElementById('generateQuotation');
 
+// Debug function
+function debug(message, data = null) {
+    console.log(`[Debug] ${message}`, data || '');
+}
+
+// Error handling function
+function showError(message) {
+    alert(`Error: ${message}`);
+    console.error(`[Error] ${message}`);
+}
+
 // Event Listeners
 document.addEventListener('DOMContentLoaded', function() {
+    debug('DOM Content Loaded');
+    
     // Add Item Form Submit
     const addItemBtn = document.getElementById('addItemBtn');
     if (addItemBtn) {
+        debug('Add Item button found');
         addItemBtn.addEventListener('click', function(e) {
             e.preventDefault();
+            debug('Add Item button clicked');
             addItem();
         });
+    } else {
+        showError('Add Item button not found in the DOM');
     }
 
     // Generate Quotation Button
     if (generateQuotationBtn) {
+        debug('Generate Quotation button found');
         generateQuotationBtn.addEventListener('click', generateQuotation);
+    } else {
+        showError('Generate Quotation button not found in the DOM');
     }
 });
 
 // Function to add item
 function addItem() {
-    const description = document.getElementById('itemDescription').value;
-    const quantity = parseFloat(document.getElementById('quantity').value);
-    const rate = parseFloat(document.getElementById('rate').value);
-    
-    if (!description || !quantity || !rate) {
-        alert('Please fill all fields');
-        return;
+    try {
+        debug('Adding new item');
+        
+        const description = document.getElementById('itemDescription');
+        const quantity = document.getElementById('quantity');
+        const rate = document.getElementById('rate');
+        
+        if (!description || !quantity || !rate) {
+            showError('Required form fields not found');
+            return;
+        }
+        
+        const descriptionValue = description.value.trim();
+        const quantityValue = parseFloat(quantity.value);
+        const rateValue = parseFloat(rate.value);
+        
+        debug('Form values:', { description: descriptionValue, quantity: quantityValue, rate: rateValue });
+        
+        if (!descriptionValue) {
+            showError('Please enter an item description');
+            return;
+        }
+        
+        if (isNaN(quantityValue) || quantityValue <= 0) {
+            showError('Please enter a valid quantity');
+            return;
+        }
+        
+        if (isNaN(rateValue) || rateValue <= 0) {
+            showError('Please enter a valid rate');
+            return;
+        }
+        
+        const amount = quantityValue * rateValue;
+        const item = { 
+            description: descriptionValue, 
+            quantity: quantityValue, 
+            rate: rateValue, 
+            amount: amount 
+        };
+        
+        debug('New item created:', item);
+        
+        items.push(item);
+        updateItemsList();
+        updateTotalAmount();
+        
+        // Clear form
+        description.value = '';
+        quantity.value = '';
+        rate.value = '';
+        
+        debug('Item added successfully');
+    } catch (error) {
+        showError(`Error adding item: ${error.message}`);
     }
-    
-    const amount = quantity * rate;
-    const item = { description, quantity, rate, amount };
-    
-    items.push(item);
-    updateItemsList();
-    updateTotalAmount();
-    
-    // Clear form
-    document.getElementById('itemDescription').value = '';
-    document.getElementById('quantity').value = '';
-    document.getElementById('rate').value = '';
 }
 
 // Function to update items list
 function updateItemsList() {
-    const tbody = document.querySelector('#itemsTable tbody');
-    if (!tbody) return;
-    
-    tbody.innerHTML = '';
-    
-    items.forEach((item, index) => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${item.description}</td>
-            <td>${item.quantity}</td>
-            <td>₹${item.rate.toFixed(2)}</td>
-            <td>₹${item.amount.toFixed(2)}</td>
-            <td>
-                <button class="btn btn-danger btn-sm" onclick="removeItem(${index})">Remove</button>
-            </td>
-        `;
-        tbody.appendChild(row);
-    });
+    try {
+        debug('Updating items list');
+        const tbody = document.querySelector('#itemsTable tbody');
+        if (!tbody) {
+            showError('Items table body not found');
+            return;
+        }
+        
+        tbody.innerHTML = '';
+        
+        items.forEach((item, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${item.description}</td>
+                <td>${item.quantity}</td>
+                <td>₹${item.rate.toFixed(2)}</td>
+                <td>₹${item.amount.toFixed(2)}</td>
+                <td>
+                    <button class="btn btn-danger btn-sm" onclick="removeItem(${index})">Remove</button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+        
+        debug('Items list updated', items);
+    } catch (error) {
+        showError(`Error updating items list: ${error.message}`);
+    }
 }
 
 // Function to remove item
 function removeItem(index) {
-    items.splice(index, 1);
-    updateItemsList();
-    updateTotalAmount();
+    try {
+        debug('Removing item at index:', index);
+        items.splice(index, 1);
+        updateItemsList();
+        updateTotalAmount();
+        debug('Item removed successfully');
+    } catch (error) {
+        showError(`Error removing item: ${error.message}`);
+    }
 }
 
 // Function to update total amount
 function updateTotalAmount() {
-    totalAmount = items.reduce((sum, item) => sum + item.amount, 0);
-    if (totalAmountElement) {
-        totalAmountElement.textContent = `₹${totalAmount.toFixed(2)}`;
+    try {
+        debug('Updating total amount');
+        totalAmount = items.reduce((sum, item) => sum + item.amount, 0);
+        if (totalAmountElement) {
+            totalAmountElement.textContent = `₹${totalAmount.toFixed(2)}`;
+            debug('Total amount updated:', totalAmount);
+        } else {
+            showError('Total amount element not found');
+        }
+    } catch (error) {
+        showError(`Error updating total amount: ${error.message}`);
     }
 }
 
@@ -203,4 +283,5 @@ function generatePDF(quotationData, quotationId) {
 }
 
 // Initialize
+debug('Initializing application');
 updateTotalAmount(); 
