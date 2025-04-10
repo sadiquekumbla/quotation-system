@@ -170,107 +170,122 @@ function updateTotalAmount() {
 
 // Function to generate quotation
 async function generateQuotation() {
-    if (items.length === 0) {
-        alert('Please add at least one item');
-        return;
-    }
-    
-    const companyName = document.getElementById('companyName').value;
-    const clientName = document.getElementById('clientName').value;
-    
-    if (!companyName || !clientName) {
-        alert('Please fill company and client details');
-        return;
-    }
-    
-    const quotationData = {
-        company: {
-            name: companyName,
-            gst: document.getElementById('gstNumber').value,
-            address: document.getElementById('companyAddress').value,
-            phone: document.getElementById('companyPhone').value,
-            email: document.getElementById('companyEmail').value
-        },
-        client: {
-            name: clientName,
-            phone: document.getElementById('clientPhone').value,
-            address: document.getElementById('clientAddress').value,
-            email: document.getElementById('clientEmail').value
-        },
-        items: items,
-        totalAmount: totalAmount,
-        date: new Date().toLocaleDateString(),
-        status: 'pending'
-    };
-    
     try {
-        // Save to Firestore
-        const docRef = await db.collection('quotations').add(quotationData);
-        console.log('Quotation saved with ID:', docRef.id);
+        debug('Generating quotation');
         
-        // Generate PDF
-        generatePDF(quotationData, docRef.id);
+        if (items.length === 0) {
+            showError('Please add at least one item');
+            return;
+        }
         
-        alert('Quotation generated and saved successfully!');
+        const companyName = document.getElementById('companyName').value;
+        const clientName = document.getElementById('clientName').value;
+        
+        if (!companyName || !clientName) {
+            showError('Please fill company and client details');
+            return;
+        }
+        
+        const quotationData = {
+            company: {
+                name: companyName,
+                gst: document.getElementById('gstNumber').value,
+                address: document.getElementById('companyAddress').value,
+                phone: document.getElementById('companyPhone').value,
+                email: document.getElementById('companyEmail').value
+            },
+            client: {
+                name: clientName,
+                phone: document.getElementById('clientPhone').value,
+                address: document.getElementById('clientAddress').value,
+                email: document.getElementById('clientEmail').value
+            },
+            items: items,
+            totalAmount: totalAmount,
+            date: new Date().toLocaleDateString(),
+            status: 'pending'
+        };
+        
+        debug('Quotation data prepared:', quotationData);
+        
+        try {
+            // Save to Firestore
+            const docRef = await db.collection('quotations').add(quotationData);
+            debug('Quotation saved with ID:', docRef.id);
+            
+            // Generate PDF
+            generatePDF(quotationData, docRef.id);
+            
+            alert('Quotation generated and saved successfully!');
+        } catch (error) {
+            showError(`Error saving quotation: ${error.message}`);
+        }
     } catch (error) {
-        console.error('Error saving quotation:', error);
-        alert('Error saving quotation. Please try again.');
+        showError(`Error generating quotation: ${error.message}`);
     }
 }
 
 // Function to generate PDF
 function generatePDF(quotationData, quotationId) {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    
-    // Add company details
-    doc.setFontSize(20);
-    doc.text('QUOTATION', 105, 20, { align: 'center' });
-    
-    doc.setFontSize(12);
-    doc.text('From:', 20, 40);
-    doc.text(quotationData.company.name, 20, 50);
-    doc.text(quotationData.company.address, 20, 60);
-    doc.text(`Phone: ${quotationData.company.phone}`, 20, 70);
-    doc.text(`Email: ${quotationData.company.email}`, 20, 80);
-    doc.text(`GST: ${quotationData.company.gst}`, 20, 90);
-    
-    // Add client details
-    doc.text('To:', 20, 110);
-    doc.text(quotationData.client.name, 20, 120);
-    doc.text(quotationData.client.address, 20, 130);
-    doc.text(`Phone: ${quotationData.client.phone}`, 20, 140);
-    doc.text(`Email: ${quotationData.client.email}`, 20, 150);
-    
-    // Add items table
-    doc.autoTable({
-        startY: 170,
-        head: [['Description', 'Quantity', 'Rate', 'Amount']],
-        body: quotationData.items.map(item => [
-            item.description,
-            item.quantity,
-            `₹${item.rate.toFixed(2)}`,
-            `₹${item.amount.toFixed(2)}`
-        ]),
-        foot: [['', '', 'Total:', `₹${quotationData.totalAmount.toFixed(2)}`]]
-    });
-    
-    // Add terms and conditions
-    const terms = [
-        'Terms and Conditions:',
-        '1. Payment is due within 30 days',
-        '2. Prices are subject to change without notice',
-        '3. Goods once sold will not be taken back',
-        '4. Interest @ 18% p.a. will be charged on overdue payments'
-    ];
-    
-    doc.setFontSize(10);
-    terms.forEach((term, index) => {
-        doc.text(term, 20, doc.autoTable.previous.finalY + 20 + (index * 10));
-    });
-    
-    // Save the PDF
-    doc.save(`Quotation_${quotationId}.pdf`);
+    try {
+        debug('Generating PDF');
+        
+        // Create new jsPDF instance
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Add company details
+        doc.setFontSize(20);
+        doc.text('QUOTATION', 105, 20, { align: 'center' });
+        
+        doc.setFontSize(12);
+        doc.text('From:', 20, 40);
+        doc.text(quotationData.company.name, 20, 50);
+        doc.text(quotationData.company.address, 20, 60);
+        doc.text(`Phone: ${quotationData.company.phone}`, 20, 70);
+        doc.text(`Email: ${quotationData.company.email}`, 20, 80);
+        doc.text(`GST: ${quotationData.company.gst}`, 20, 90);
+        
+        // Add client details
+        doc.text('To:', 20, 110);
+        doc.text(quotationData.client.name, 20, 120);
+        doc.text(quotationData.client.address, 20, 130);
+        doc.text(`Phone: ${quotationData.client.phone}`, 20, 140);
+        doc.text(`Email: ${quotationData.client.email}`, 20, 150);
+        
+        // Add items table
+        doc.autoTable({
+            startY: 170,
+            head: [['Description', 'Quantity', 'Rate', 'Amount']],
+            body: quotationData.items.map(item => [
+                item.description,
+                item.quantity,
+                `₹${item.rate.toFixed(2)}`,
+                `₹${item.amount.toFixed(2)}`
+            ]),
+            foot: [['', '', 'Total:', `₹${quotationData.totalAmount.toFixed(2)}`]]
+        });
+        
+        // Add terms and conditions
+        const terms = [
+            'Terms and Conditions:',
+            '1. Payment is due within 30 days',
+            '2. Prices are subject to change without notice',
+            '3. Goods once sold will not be taken back',
+            '4. Interest @ 18% p.a. will be charged on overdue payments'
+        ];
+        
+        doc.setFontSize(10);
+        terms.forEach((term, index) => {
+            doc.text(term, 20, doc.autoTable.previous.finalY + 20 + (index * 10));
+        });
+        
+        // Save the PDF
+        doc.save(`Quotation_${quotationId}.pdf`);
+        debug('PDF generated successfully');
+    } catch (error) {
+        showError(`Error generating PDF: ${error.message}`);
+    }
 }
 
 // Initialize
