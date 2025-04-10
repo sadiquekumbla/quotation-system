@@ -87,21 +87,29 @@
             <div class="card-body">
                 <form id="itemForm">
                     <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label for="itemDescription" class="form-label">Description</label>
-                            <input type="text" class="form-control" id="itemDescription" required>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="itemDescription" class="form-label">Description</label>
+                                <input type="text" class="form-control" id="itemDescription" required>
+                            </div>
                         </div>
-                        <div class="col-md-3 mb-3">
-                            <label for="itemQuantity" class="form-label">Quantity</label>
-                            <input type="number" class="form-control" id="itemQuantity" min="1" required>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="quantity" class="form-label">Quantity</label>
+                                <input type="number" class="form-control" id="quantity" min="1" required>
+                            </div>
                         </div>
-                        <div class="col-md-3 mb-3">
-                            <label for="itemRate" class="form-label">Rate (₹)</label>
-                            <input type="number" class="form-control" id="itemRate" min="0" step="0.01" required>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="rate" class="form-label">Rate (₹)</label>
+                                <input type="number" class="form-control" id="rate" min="0" step="0.01" required>
+                            </div>
                         </div>
-                        <div class="col-md-2 mb-3">
-                            <label class="form-label">&nbsp;</label>
-                            <button type="button" class="btn btn-primary w-100" id="addItemBtn">Add Item</button>
+                        <div class="col-md-2">
+                            <div class="mb-3">
+                                <label class="form-label">&nbsp;</label>
+                                <button type="button" class="btn btn-primary w-100" id="addItemBtn">Add Item</button>
+                            </div>
                         </div>
                     </div>
                 </form>

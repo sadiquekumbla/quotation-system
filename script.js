@@ -20,13 +20,24 @@ const totalAmountElement = document.getElementById('totalAmount');
 const generateQuotationBtn = document.getElementById('generateQuotation');
 
 // Event Listeners
-itemForm.addEventListener('submit', addItem);
-generateQuotationBtn.addEventListener('click', generateQuotation);
+document.addEventListener('DOMContentLoaded', function() {
+    // Add Item Form Submit
+    const addItemBtn = document.getElementById('addItemBtn');
+    if (addItemBtn) {
+        addItemBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            addItem();
+        });
+    }
+
+    // Generate Quotation Button
+    if (generateQuotationBtn) {
+        generateQuotationBtn.addEventListener('click', generateQuotation);
+    }
+});
 
 // Function to add item
-function addItem(e) {
-    e.preventDefault();
-    
+function addItem() {
     const description = document.getElementById('itemDescription').value;
     const quantity = parseFloat(document.getElementById('quantity').value);
     const rate = parseFloat(document.getElementById('rate').value);
@@ -42,12 +53,19 @@ function addItem(e) {
     items.push(item);
     updateItemsList();
     updateTotalAmount();
-    itemForm.reset();
+    
+    // Clear form
+    document.getElementById('itemDescription').value = '';
+    document.getElementById('quantity').value = '';
+    document.getElementById('rate').value = '';
 }
 
 // Function to update items list
 function updateItemsList() {
-    itemsList.innerHTML = '';
+    const tbody = document.querySelector('#itemsTable tbody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
     
     items.forEach((item, index) => {
         const row = document.createElement('tr');
@@ -60,7 +78,7 @@ function updateItemsList() {
                 <button class="btn btn-danger btn-sm" onclick="removeItem(${index})">Remove</button>
             </td>
         `;
-        itemsList.appendChild(row);
+        tbody.appendChild(row);
     });
 }
 
@@ -74,7 +92,9 @@ function removeItem(index) {
 // Function to update total amount
 function updateTotalAmount() {
     totalAmount = items.reduce((sum, item) => sum + item.amount, 0);
-    totalAmountElement.textContent = `₹${totalAmount.toFixed(2)}`;
+    if (totalAmountElement) {
+        totalAmountElement.textContent = `₹${totalAmount.toFixed(2)}`;
+    }
 }
 
 // Function to generate quotation
