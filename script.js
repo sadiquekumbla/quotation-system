@@ -2,12 +2,9 @@
 let items = [];
 let totalAmount = 0;
 
-// Initialize Firebase if not already initialized
-if (!window.firebaseApp) {
-    window.firebaseApp = firebase.initializeApp(firebaseConfig);
-    window.firebaseDb = firebase.database();
-    window.firebaseFirestore = firebase.firestore();
-}
+// Initialize Firebase
+const app = firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
 // DOM Elements
 const companyForm = document.getElementById('companyForm');
@@ -31,9 +28,11 @@ function showError(message) {
 // Function to save quotation to Firebase
 async function saveToFirebase(quotationData) {
     try {
-        const quotationsRef = window.firebaseDb.ref('quotations');
+        debug('Saving quotation to Firebase', quotationData);
+        const quotationsRef = db.ref('quotations');
         const newQuotationRef = quotationsRef.push();
         await newQuotationRef.set(quotationData);
+        debug('Quotation saved successfully with ID:', newQuotationRef.key);
         return newQuotationRef.key; // Return the quotation ID
     } catch (error) {
         console.error('Error saving to Firebase:', error);
