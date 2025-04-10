@@ -189,7 +189,6 @@ async function generateQuotation() {
         const quotationData = {
             company: {
                 name: companyName,
-                gst: document.getElementById('gstNumber').value,
                 address: document.getElementById('companyAddress').value,
                 phone: document.getElementById('companyPhone').value,
                 email: document.getElementById('companyEmail').value
@@ -244,7 +243,6 @@ function generatePDF(quotationData, quotationId) {
         doc.text(quotationData.company.address, 20, 60);
         doc.text(`Phone: ${quotationData.company.phone}`, 20, 70);
         doc.text(`Email: ${quotationData.company.email}`, 20, 80);
-        doc.text(`GST: ${quotationData.company.gst}`, 20, 90);
         
         // Add client details
         doc.text('To:', 20, 110);
