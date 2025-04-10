@@ -1,12 +1,3 @@
-// Initialize Firebase
-const firebaseConfig = {
-    // Your Firebase configuration will go here
-    // You'll need to replace this with your actual Firebase config
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
 // Global variables
 let items = [];
 let totalAmount = 0;
