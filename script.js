@@ -278,9 +278,6 @@ async function generateQuotation() {
         const finalY = doc.lastAutoTable.finalY || 130;
         doc.text(`Total Amount: ₹${totalAmount.toFixed(2)}`, 20, finalY + 20);
 
-        // Add shareable link
-        doc.text(`View online: ${shareableLink}`, 20, finalY + 30);
-
         // Save the PDF
         doc.save(`quotation_${new Date().toISOString().split('T')[0]}.pdf`);
 
