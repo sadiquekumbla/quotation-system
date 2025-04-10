@@ -2,11 +2,18 @@
 let items = [];
 let totalAmount = 0;
 
+// Initialize Firebase if not already initialized
+if (!window.firebaseApp) {
+    window.firebaseApp = firebase.initializeApp(firebaseConfig);
+    window.firebaseDb = firebase.database();
+    window.firebaseFirestore = firebase.firestore();
+}
+
 // DOM Elements
 const companyForm = document.getElementById('companyForm');
 const clientForm = document.getElementById('clientForm');
 const itemForm = document.getElementById('itemForm');
-const itemsList = document.getElementById('itemsList');
+const itemsTable = document.getElementById('itemsTable');
 const totalAmountElement = document.getElementById('totalAmount');
 const generateQuotationBtn = document.getElementById('generateQuotation');
 
@@ -19,6 +26,25 @@ function debug(message, data = null) {
 function showError(message) {
     alert(`Error: ${message}`);
     console.error(`[Error] ${message}`);
+}
+
+// Function to save quotation to Firebase
+async function saveToFirebase(quotationData) {
+    try {
+        const quotationsRef = window.firebaseDb.ref('quotations');
+        const newQuotationRef = quotationsRef.push();
+        await newQuotationRef.set(quotationData);
+        return newQuotationRef.key; // Return the quotation ID
+    } catch (error) {
+        console.error('Error saving to Firebase:', error);
+        throw error;
+    }
+}
+
+// Function to generate shareable link
+function generateShareableLink(quotationId) {
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/view-quotation.html?id=${quotationId}`;
 }
 
 // Event Listeners
@@ -171,118 +197,99 @@ function updateTotalAmount() {
 // Function to generate quotation
 async function generateQuotation() {
     try {
-        debug('Generating quotation');
-        
-        if (items.length === 0) {
-            showError('Please add at least one item');
+        // Validate forms
+        if (!companyForm.checkValidity() || !clientForm.checkValidity()) {
+            alert('Please fill in all required fields');
             return;
         }
-        
-        const companyName = document.getElementById('companyName').value;
-        const clientName = document.getElementById('clientName').value;
-        
-        if (!companyName || !clientName) {
-            showError('Please fill company and client details');
-            return;
-        }
-        
-        const quotationData = {
-            company: {
-                name: companyName,
-                address: document.getElementById('companyAddress').value,
-                phone: document.getElementById('companyPhone').value,
-                email: document.getElementById('companyEmail').value
-            },
-            client: {
-                name: clientName,
-                phone: document.getElementById('clientPhone').value,
-                address: document.getElementById('clientAddress').value,
-                email: document.getElementById('clientEmail').value
-            },
-            items: items,
-            totalAmount: totalAmount,
-            date: new Date().toLocaleDateString(),
-            status: 'pending'
-        };
-        
-        debug('Quotation data prepared:', quotationData);
-        
-        try {
-            // Save to Firestore
-            const docRef = await db.collection('quotations').add(quotationData);
-            debug('Quotation saved with ID:', docRef.id);
-            
-            // Generate PDF
-            generatePDF(quotationData, docRef.id);
-            
-            alert('Quotation generated and saved successfully!');
-        } catch (error) {
-            showError(`Error saving quotation: ${error.message}`);
-        }
-    } catch (error) {
-        showError(`Error generating quotation: ${error.message}`);
-    }
-}
 
-// Function to generate PDF
-function generatePDF(quotationData, quotationId) {
-    try {
-        debug('Generating PDF');
+        if (items.length === 0) {
+            alert('Please add at least one item');
+            return;
+        }
+
+        // Get company details
+        const companyDetails = {
+            name: document.getElementById('companyName').value,
+            address: document.getElementById('companyAddress').value,
+            phone: document.getElementById('companyPhone').value,
+            email: document.getElementById('companyEmail').value
+        };
+
+        // Get client details
+        const clientDetails = {
+            name: document.getElementById('clientName').value,
+            address: document.getElementById('clientAddress').value,
+            phone: document.getElementById('clientPhone').value,
+            email: document.getElementById('clientEmail').value
+        };
+
+        // Create quotation data
+        const quotationData = {
+            company: companyDetails,
+            client: clientDetails,
+            items: items,
+            total: totalAmount,
+            date: new Date().toISOString()
+        };
+
+        // Save to Firebase
+        const quotationId = await saveToFirebase(quotationData);
         
-        // Create new jsPDF instance
+        // Generate shareable link
+        const shareableLink = generateShareableLink(quotationId);
+
+        // Generate PDF
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         
         // Add company details
         doc.setFontSize(20);
-        doc.text('QUOTATION', 105, 20, { align: 'center' });
+        doc.text('Quotation', 105, 20, { align: 'center' });
         
         doc.setFontSize(12);
-        doc.text('From:', 20, 40);
-        doc.text(quotationData.company.name, 20, 50);
-        doc.text(quotationData.company.address, 20, 60);
-        doc.text(`Phone: ${quotationData.company.phone}`, 20, 70);
-        doc.text(`Email: ${quotationData.company.email}`, 20, 80);
-        
+        doc.text(`From: ${quotationData.company.name}`, 20, 40);
+        doc.text(quotationData.company.address, 20, 50);
+        doc.text(`Phone: ${quotationData.company.phone}`, 20, 60);
+        doc.text(`Email: ${quotationData.company.email}`, 20, 70);
+
         // Add client details
-        doc.text('To:', 20, 110);
-        doc.text(quotationData.client.name, 20, 120);
-        doc.text(quotationData.client.address, 20, 130);
-        doc.text(`Phone: ${quotationData.client.phone}`, 20, 140);
-        doc.text(`Email: ${quotationData.client.email}`, 20, 150);
-        
+        doc.text(`To: ${quotationData.client.name}`, 20, 90);
+        doc.text(quotationData.client.address, 20, 100);
+        doc.text(`Phone: ${quotationData.client.phone}`, 20, 110);
+        doc.text(`Email: ${quotationData.client.email}`, 20, 120);
+
         // Add items table
+        const tableColumn = ["Description", "Quantity", "Rate", "Amount"];
+        const tableRows = items.map(item => [
+            item.description,
+            item.quantity.toString(),
+            `₹${item.rate.toFixed(2)}`,
+            `₹${item.amount.toFixed(2)}`
+        ]);
+
         doc.autoTable({
-            startY: 170,
-            head: [['Description', 'Quantity', 'Rate', 'Amount']],
-            body: quotationData.items.map(item => [
-                item.description,
-                item.quantity,
-                `₹${item.rate.toFixed(2)}`,
-                `₹${item.amount.toFixed(2)}`
-            ]),
-            foot: [['', '', 'Total:', `₹${quotationData.totalAmount.toFixed(2)}`]]
+            head: [tableColumn],
+            body: tableRows,
+            startY: 130,
+            theme: 'grid'
         });
-        
-        // Add terms and conditions
-        const terms = [
-            'Terms and Conditions:',
-            '1. Payment is due within 30 days',
-            '2. Prices are subject to change without notice',
-            '3. Goods once sold will not be taken back',
-            '4. Interest @ 18% p.a. will be charged on overdue payments'
-        ];
-        
-        doc.setFontSize(10);
-        terms.forEach((term, index) => {
-            doc.text(term, 20, doc.autoTable.previous.finalY + 20 + (index * 10));
-        });
-        
+
+        // Add total
+        const finalY = doc.lastAutoTable.finalY || 130;
+        doc.text(`Total Amount: ₹${totalAmount.toFixed(2)}`, 20, finalY + 20);
+
+        // Add shareable link
+        doc.text(`View online: ${shareableLink}`, 20, finalY + 30);
+
         // Save the PDF
-        doc.save(`Quotation_${quotationId}.pdf`);
-        debug('PDF generated successfully');
+        doc.save(`quotation_${new Date().toISOString().split('T')[0]}.pdf`);
+
+        // Show success message with shareable link
+        alert(`Quotation generated successfully!\n\nShareable link: ${shareableLink}`);
     } catch (error) {
-        showError(`Error generating PDF: ${error.message}`);
+        console.error('Error generating quotation:', error);
+        alert('Error generating quotation. Please try again.');
     }
 }
 
